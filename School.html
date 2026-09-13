@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schoolonsim</title>
+<style>
+  :root{
+    --bg:#0f1b2d;
+    --bg-soft:#16273f;
+    --panel:#1c2f4e;
+    --panel-light:#24406a;
+    --accent:#ffb545;
+    --accent2:#3fd0c9;
+    --accent3:#ff6b8b;
+    --text:#eaf1fb;
+    --text-dim:#9db1cc;
+    --good:#4ade80;
+    --bad:#f87171;
+    --radius:18px;
+    --shadow:0 8px 24px rgba(0,0,0,.35);
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);min-height:100vh;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(63,208,201,.12), transparent 40%),
+      radial-gradient(circle at 100% 20%, rgba(255,181,69,.10), transparent 45%),
+      var(--bg);
+    padding-bottom:90px;
+  }
+  #app{max-width:640px;margin:0 auto;padding:16px 14px 8px;}
+
+  /* Topbar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-weight:800;color:#1a1200;font-size:16px;box-shadow:var(--shadow);}
+  .brand-name{font-weight:800;font-size:17px;letter-spacing:.2px;}
+  .brand-sub{font-size:11px;color:var(--text-dim);margin-top:-2px;}
+  .day-pill{background:var(--panel);border:1px solid var(--panel-light);padding:8px 14px;border-radius:100px;font-size:13px;font-weight:600;color:var(--accent2);}
+
+  /* Cards */
+  .card{background:var(--panel);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.04);}
+  .card h2{margin:0 0 10px;font-size:15px;color:var(--text-dim);font-weight:700;}
+  .card h3{margin:0 0 6px;font-size:18px;font-weight:800;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .stat-box{background:var(--bg-soft);border-radius:14px;padding:10px 8px;text-align:center;}
+  .stat-box .val{font-size:18px;font-weight:800;color:var(--accent);}
+  .stat-box .lbl{font-size:10.5px;color:var(--text-dim);margin-top:2px;}
+
+  .progress-track{width:100%;height:8px;border-radius:100px;background:var(--bg-soft);overflow:hidden;margin-top:6px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:100px;transition:width .4s ease;}
+
+  .btn{border:none;border-radius:14px;padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;transition:transform .1s ease,filter .15s ease;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(135deg,var(--accent2),#2aa89f);color:#052321;}
+  .btn-accent{background:linear-gradient(135deg,var(--accent),#e08e1e);color:#241300;}
+  .btn-pink{background:linear-gradient(135deg,var(--accent3),#c94465);color:#2a0410;}
+  .btn-ghost{background:var(--bg-soft);color:var(--text);border:1px solid var(--panel-light);}
+  .btn-block{width:100%;}
+  .btn-row{display:flex;gap:10px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .lesson-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg-soft);border-radius:14px;padding:10px 12px;margin-bottom:8px;}
+  .lesson-item .subj{font-weight:700;font-size:14px;}
+  .lesson-item .topic{font-size:11.5px;color:var(--text-dim);}
+  .badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:100px;}
+  .badge-belum{background:rgba(255,181,69,.15);color:var(--accent);}
+  .badge-selesai{background:rgba(74,222,128,.15);color:var(--good);}
+  .badge-proses{background:rgba(63,208,201,.15);color:var(--accent2);}
+
+  /* Nav */
+  .nav{position:fixed;bottom:0;left:0;right:0;background:rgba(20,32,52,.97);backdrop-filter:blur(8px);border-top:1px solid var(--panel-light);display:flex;justify-content:center;z-index:40;}
+  .nav-inner{max-width:640px;width:100%;display:grid;grid-template-columns:repeat(6,1fr);}
+  .nav-btn{background:none;border:none;color:var(--text-dim);padding:10px 2px 8px;font-size:9.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;}
+  .nav-btn.active{color:var(--accent2);}
+  .nav-icon{width:20px;height:20px;}
+
+  .view{animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .subject-tag{display:inline-block;background:var(--panel-light);color:var(--accent2);font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:8px;}
+  .explain-box{background:var(--bg-soft);border-left:3px solid var(--accent2);border-radius:10px;padding:12px;font-size:13.5px;line-height:1.5;margin-bottom:10px;}
+  .example-box{background:var(--bg-soft);border-left:3px solid var(--accent);border-radius:10px;padding:12px;font-size:13.5px;line-height:1.5;margin-bottom:14px;}
+  .example-box b{color:var(--accent);}
+
+  .q-num{font-size:11.5px;color:var(--text-dim);margin-bottom:4px;}
+  .q-text{font-size:15px;font-weight:700;margin-bottom:12px;}
+  .opt{display:block;width:100%;text-align:left;background:var(--bg-soft);border:1.5px solid var(--panel-light);color:var(--text);border-radius:12px;padding:11px 14px;margin-bottom:8px;font-size:13.5px;cursor:pointer;}
+  .opt.selected{border-color:var(--accent2);background:rgba(63,208,201,.12);}
+  .opt.correct{border-color:var(--good);background:rgba(74,222,128,.15);}
+  .opt.wrong{border-color:var(--bad);background:rgba(248,113,113,.15);}
+
+  .result-circle{width:90px;height:90px;border-radius:50%;margin:8px auto 14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;background:conic-gradient(var(--accent2) calc(var(--pct)*1%), var(--bg-soft) 0);}
+  .result-circle span{background:var(--panel);width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+
+  .menu-item{display:flex;justify-content:space-between;align-items:center;background:var(--bg-soft);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+  .menu-item .name{font-size:14px;font-weight:700;}
+  .menu-item .meta{font-size:11px;color:var(--text-dim);}
+  .menu-item .price{font-size:13px;font-weight:800;color:var(--accent);}
+  .nutri-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-left:6px;}
+  .nutri-sehat{background:rgba(74,222,128,.15);color:var(--good);}
+  .nutri-sedang{background:rgba(255,181,69,.15);color:var(--accent);}
+  .nutri-kurang{background:rgba(248,113,113,.15);color:var(--bad);}
+
+  .announce{background:var(--bg-soft);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13px;line-height:1.45;border-left:3px solid var(--accent3);}
+  .task-item{background:var(--bg-soft);border-radius:14px;padding:12px;margin-bottom:10px;}
+  .task-item .subj{font-size:11.5px;color:var(--accent2);font-weight:700;}
+  .task-item p{font-size:13px;margin:6px 0 10px;line-height:1.45;}
+
+  input[type=text],input[type=number]{width:100%;background:var(--bg-soft);border:1.5px solid var(--panel-light);color:var(--text);border-radius:12px;padding:11px 14px;font-size:14px;margin-bottom:10px;}
+  label.field-label{font-size:12px;color:var(--text-dim);font-weight:700;display:block;margin-bottom:5px;}
+
+  .cal-week{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;}
+  .cal-day{background:var(--bg-soft);border-radius:10px;padding:8px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--text-dim);}
+  .cal-day.active{background:linear-gradient(135deg,var(--accent2),#2aa89f);color:#052321;}
+
+  .hist-item{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--bg-soft);}
+  .hist-item:last-child{border-bottom:none;}
+
+  .empty-note{font-size:12.5px;color:var(--text-dim);text-align:center;padding:14px 0;}
+  .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--panel-light);color:var(--text);padding:10px 18px;border-radius:100px;font-size:13px;font-weight:700;box-shadow:var(--shadow);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, bottom .25s ease;}
+  .toast.show{opacity:1;bottom:112px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<nav class="nav"><div class="nav-inner" id="navBar"></div></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================= DATA MATA PELAJARAN & JADWAL ======================= */
+const SUBJECT_NAMES = {
+  matematika:"Matematika", ipa:"IPA", bindo:"Bahasa Indonesia", ips:"IPS",
+  binggris:"Bahasa Inggris", qurdis:"Qur'an Hadits", fiqih:"Fiqih",
+  ppkn:"Pendidikan Pancasila", pjok:"PJOK", sbdp:"Seni Budaya dan Prakarya"
+};
+const DAYS = ["Senin","Selasa","Rabu","Kamis","Jumat"];
+const SCHEDULE = {
+  Senin:  ["matematika","bindo","ipa"],
+  Selasa: ["ips","binggris","fiqih"],
+  Rabu:   ["qurdis","matematika","pjok"],
+  Kamis:  ["ipa","bindo","sbdp"],
+  Jumat:  ["ppkn","ips","binggris"]
+};
+
+/* ======================= BANK MATERI ======================= */
+// setiap subjek: array topik {judul, penjelasan, contoh, soal:[[pertanyaan,[opsi],jawabanIndex]x5]}
+const MATERI = {
+matematika:[
+ {judul:"Operasi Hitung Campuran",
+  penjelasan:"Dalam operasi hitung campuran, kita mengerjakan perkalian dan pembagian terlebih dahulu sebelum penjumlahan dan pengurangan, kecuali ada tanda kurung yang harus dikerjakan lebih dulu. Urutan ini disebut aturan prioritas operasi hitung.",
+  contoh:"Contoh: 12 + 4 x 3 = 12 + 12 = 24 (perkalian dikerjakan dulu, bukan 12+4 dulu).",
+  soal:[
+   ["Hasil dari 8 + 6 x 2 adalah...",["14","20","28","16"],1],
+   ["Hasil dari (10 - 4) x 3 adalah...",["18","30","6","24"],0],
+   ["Hasil dari 20 : 4 + 5 adalah...",["10","1","25","4"],0],
+   ["Hasil dari 6 x 3 - 8 adalah...",["10","24","18","2"],0],
+   ["Hasil dari 15 - 3 x 4 adalah...",["48","3","12","9"],2]
+  ]},
+ {judul:"Pecahan",
+  penjelasan:"Pecahan menyatakan bagian dari keseluruhan, ditulis sebagai pembilang per penyebut. Untuk menjumlahkan atau mengurangkan pecahan berbeda penyebut, kita harus menyamakan penyebutnya terlebih dahulu dengan mencari KPK.",
+  contoh:"Contoh: 1/2 + 1/4 = 2/4 + 1/4 = 3/4.",
+  soal:[
+   ["Hasil dari 1/3 + 1/3 adalah...",["2/3","2/6","1/6","3/3"],0],
+   ["Bentuk sederhana dari 6/8 adalah...",["3/4","2/3","1/2","4/6"],0],
+   ["Hasil dari 3/4 - 1/4 adalah...",["1/2","2/4","1/4","1"],0],
+   ["Hasil dari 1/2 + 1/3 adalah...",["5/6","2/5","3/6","1/5"],0],
+   ["Pecahan yang senilai dengan 2/5 adalah...",["4/10","2/10","5/2","1/5"],0]
+  ]},
+ {judul:"Desimal dan Persen",
+  penjelasan:"Pecahan desimal ditulis dengan tanda koma, sedangkan persen berarti per seratus. Untuk mengubah pecahan biasa menjadi persen, kalikan dengan 100%. Untuk mengubah desimal menjadi persen, geser koma dua angka ke kanan.",
+  contoh:"Contoh: 0,25 = 25%, dan 3/4 = 75%.",
+  soal:[
+   ["0,5 jika diubah menjadi persen adalah...",["50%","5%","500%","0,5%"],0],
+   ["25% jika diubah menjadi pecahan desimal adalah...",["0,25","2,5","0,025","25,0"],0],
+   ["3/4 jika diubah menjadi persen adalah...",["75%","34%","43%","25%"],0],
+   ["Hasil dari 10% dari 200 adalah...",["20","10","200","100"],0],
+   ["Urutan dari yang terkecil: 0,4 ; 45% ; 2/5 adalah...",["2/5, 0,4, 45%","45%, 0,4, 2/5","0,4, 2/5, 45%","2/5=0,4 lalu 45%",],3]
+  ]},
+ {judul:"Perbandingan dan Skala",
+  penjelasan:"Perbandingan menyatakan hubungan antara dua besaran. Skala adalah perbandingan antara jarak pada peta/gambar dengan jarak sebenarnya, biasanya ditulis dalam bentuk 1 : n.",
+  contoh:"Contoh: skala peta 1:100.000 berarti 1 cm di peta sama dengan 100.000 cm (1 km) jarak sebenarnya.",
+  soal:[
+   ["Peta berskala 1:500.000, jarak pada peta 4 cm. Jarak sebenarnya adalah...",["2.000.000 cm","500.000 cm","4.000.000 cm","20.000 cm"],0],
+   ["Perbandingan uang Ali dan Budi adalah 2:3. Jika uang Ali Rp40.000, uang Budi adalah...",["Rp60.000","Rp80.000","Rp40.000","Rp20.000"],0],
+   ["Jarak sebenarnya 6 km digambar dengan skala 1:100.000. Jarak pada peta adalah...",["6 cm","60 cm","600 cm","0,6 cm"],0],
+   ["Perbandingan paling sederhana dari 12:18 adalah...",["2:3","3:2","4:6","6:9"],0],
+   ["Jika skala 1:50 dan jarak gambar 3 cm, jarak sebenarnya adalah...",["150 cm","50 cm","15 cm","300 cm"],0]
+  ]},
+ {judul:"Luas dan Keliling Bangun Datar",
+  penjelasan:"Luas adalah ukuran daerah di dalam suatu bangun datar, sedangkan keliling adalah total panjang seluruh sisi terluar bangun tersebut. Setiap bangun datar punya rumus luas dan keliling yang berbeda.",
+  contoh:"Contoh: persegi panjang panjang 8 cm lebar 5 cm, luas = 8x5=40 cm², keliling = 2x(8+5)=26 cm.",
+  soal:[
+   ["Luas persegi dengan sisi 9 cm adalah...",["81 cm²","36 cm²","18 cm²","72 cm²"],0],
+   ["Keliling persegi panjang panjang 12 cm lebar 5 cm adalah...",["34 cm","60 cm","17 cm","30 cm"],0],
+   ["Luas segitiga dengan alas 10 cm tinggi 6 cm adalah...",["30 cm²","60 cm²","16 cm²","36 cm²"],0],
+   ["Keliling persegi dengan sisi 7 cm adalah...",["28 cm","49 cm","14 cm","21 cm"],0],
+   ["Luas persegi panjang panjang 15 cm lebar 4 cm adalah...",["60 cm²","19 cm²","38 cm²","30 cm²"],0]
+  ]},
+ {judul:"Volume Kubus dan Balok",
+  penjelasan:"Volume kubus dihitung dengan sisi x sisi x sisi (s³), sedangkan volume balok dihitung dengan panjang x lebar x tinggi. Satuan volume biasanya cm³ atau m³.",
+  contoh:"Contoh: kubus sisi 4 cm, volume = 4x4x4=64 cm³.",
+  soal:[
+   ["Volume kubus dengan sisi 5 cm adalah...",["125 cm³","25 cm³","15 cm³","100 cm³"],0],
+   ["Volume balok panjang 6 cm lebar 4 cm tinggi 3 cm adalah...",["72 cm³","13 cm³","24 cm³","60 cm³"],0],
+   ["Volume kubus dengan sisi 3 cm adalah...",["27 cm³","9 cm³","12 cm³","81 cm³"],0],
+   ["Volume balok panjang 10 cm lebar 5 cm tinggi 2 cm adalah...",["100 cm³","17 cm³","50 cm³","20 cm³"],0],
+   ["Sebuah kubus bervolume 64 cm³, panjang sisinya adalah...",["4 cm","8 cm","16 cm","6 cm"],0]
+  ]},
+ {judul:"Jarak, Kecepatan, dan Waktu",
+  penjelasan:"Hubungan jarak, kecepatan, dan waktu dirumuskan: jarak = kecepatan x waktu, kecepatan = jarak : waktu, dan waktu = jarak : kecepatan.",
+  contoh:"Contoh: mobil menempuh 120 km dalam 2 jam, kecepatannya = 120:2 = 60 km/jam.",
+  soal:[
+   ["Sebuah motor menempuh jarak 90 km dalam 3 jam. Kecepatannya adalah...",["30 km/jam","270 km/jam","3 km/jam","93 km/jam"],0],
+   ["Mobil melaju 60 km/jam selama 2,5 jam, jarak tempuhnya adalah...",["150 km","120 km","24 km","62,5 km"],0],
+   ["Jarak 200 km ditempuh dengan kecepatan 50 km/jam, waktu tempuhnya adalah...",["4 jam","10 jam","250 jam","150 jam"],0],
+   ["Sepeda menempuh 24 km dalam 2 jam, kecepatannya adalah...",["12 km/jam","48 km/jam","22 km/jam","26 km/jam"],0],
+   ["Kereta melaju 80 km/jam selama 1,5 jam, jaraknya adalah...",["120 km","81,5 km","78,5 km","160 km"],0]
+  ]},
+ {judul:"Debit dan Rata-rata",
+  penjelasan:"Debit adalah banyaknya volume zat cair yang mengalir tiap satuan waktu (debit = volume : waktu). Rata-rata (mean) dihitung dengan menjumlahkan semua data lalu membaginya dengan banyak data.",
+  contoh:"Contoh: bak terisi 100 liter dalam 5 menit, debit = 100:5 = 20 liter/menit.",
+  soal:[
+   ["Bak mandi terisi 60 liter dalam 3 menit. Debitnya adalah...",["20 liter/menit","180 liter/menit","63 liter/menit","30 liter/menit"],0],
+   ["Rata-rata dari 6, 8, 10, 8 adalah...",["8","32","7","9"],0],
+   ["Kran mengalir dengan debit 5 liter/menit selama 8 menit, volume air adalah...",["40 liter","13 liter","3 liter","45 liter"],0],
+   ["Rata-rata nilai ulangan 70, 80, 90 adalah...",["80","75","85","70"],0],
+   ["Volume 240 liter mengalir dalam waktu 6 menit, debitnya adalah...",["40 liter/menit","246 liter/menit","1440 liter/menit","4 liter/menit"],0]
+  ]},
+ {judul:"Tabel dan Diagram",
+  penjelasan:"Data yang dikumpulkan dapat disajikan dalam bentuk tabel atau diagram (batang, garis, lingkaran) agar lebih mudah dibaca dan dibandingkan.",
+  contoh:"Contoh: diagram batang tinggi badan siswa membantu melihat siswa mana yang paling tinggi dengan cepat.",
+  soal:[
+   ["Diagram yang cocok menampilkan perubahan suhu tiap jam adalah diagram...",["Garis","Lingkaran","Gambar","Venn"],0],
+   ["Diagram yang menampilkan perbandingan bagian dari keseluruhan dalam bentuk persen adalah diagram...",["Lingkaran","Garis","Batang","Titik"],0],
+   ["Jika diagram batang menunjukkan penjualan Senin=10, Selasa=15, Rabu=5, total penjualan 3 hari adalah...",["30","25","20","35"],0],
+   ["Tabel data digunakan untuk...",["Menyajikan data secara rapi dan terstruktur","Menggambar pemandangan","Menghitung volume","Menulis puisi"],0],
+   ["Diagram batang paling cocok untuk membandingkan...",["Jumlah antar kategori","Perubahan waktu terus-menerus","Bagian dari keseluruhan","Urutan huruf abjad"],0]
+  ]}
+],
+ipa:[
+ {judul:"Sistem Tata Surya",
+  penjelasan:"Tata surya terdiri dari matahari sebagai pusat, dikelilingi delapan planet yang beredar pada garis edarnya (orbit) masing-masing. Planet terdekat dengan matahari adalah Merkurius, dan yang terjauh adalah Neptunus.",
+  contoh:"Contoh: Bumi adalah planet ketiga dari matahari dan satu-satunya planet yang diketahui memiliki kehidupan.",
+  soal:[
+   ["Planet terdekat dengan matahari adalah...",["Merkurius","Venus","Bumi","Mars"],0],
+   ["Planet yang dikenal sebagai planet merah adalah...",["Mars","Venus","Jupiter","Saturnus"],0],
+   ["Pusat tata surya adalah...",["Matahari","Bumi","Bulan","Bintang"],0],
+   ["Planet terbesar dalam tata surya adalah...",["Jupiter","Bumi","Mars","Merkurius"],0],
+   ["Garis edar planet mengelilingi matahari disebut...",["Orbit","Rotasi","Revolusi bulan","Gravitasi"],0]
+  ]},
+ {judul:"Rantai Makanan dan Ekosistem",
+  penjelasan:"Rantai makanan menggambarkan urutan makan dan dimakan antar makhluk hidup dalam suatu ekosistem, dimulai dari produsen (tumbuhan), konsumen, hingga pengurai.",
+  contoh:"Contoh rantai makanan: padi dimakan tikus, tikus dimakan ular, ular dimakan elang.",
+  soal:[
+   ["Makhluk hidup yang mampu membuat makanan sendiri disebut...",["Produsen","Konsumen","Pengurai","Predator"],0],
+   ["Hewan pemakan tumbuhan disebut...",["Herbivora","Karnivora","Omnivora","Insektivora"],0],
+   ["Pengurai berfungsi untuk...",["Menguraikan sisa makhluk hidup yang mati","Membuat makanan sendiri","Memakan hewan lain","Menghasilkan oksigen"],0],
+   ["Dalam rantai makanan sawah, padi berperan sebagai...",["Produsen","Konsumen 1","Konsumen 2","Pengurai"],0],
+   ["Contoh hewan omnivora adalah...",["Ayam","Sapi","Singa","Kambing"],0]
+  ]},
+ {judul:"Sifat-sifat Cahaya",
+  penjelasan:"Cahaya memiliki sifat merambat lurus, dapat dipantulkan, dapat dibiaskan, dan dapat diuraikan menjadi berbagai warna. Sifat-sifat ini menjelaskan berbagai peristiwa seperti bayangan dan pelangi.",
+  contoh:"Contoh: pensil terlihat bengkok di dalam air karena cahaya mengalami pembiasan.",
+  soal:[
+   ["Peristiwa pelangi terjadi karena cahaya mengalami...",["Penguraian","Pemantulan biasa","Perambatan lurus","Penyerapan"],0],
+   ["Bayangan terbentuk karena cahaya bersifat...",["Merambat lurus","Dapat diuraikan","Dapat dibiaskan","Dapat dipantulkan"],0],
+   ["Pensil terlihat bengkok saat dicelupkan ke air karena cahaya mengalami...",["Pembiasan","Pemantulan","Penguraian","Perambatan lurus"],0],
+   ["Cermin memanfaatkan sifat cahaya yaitu...",["Pemantulan","Pembiasan","Penguraian","Penyerapan"],0],
+   ["Sumber cahaya alami terbesar bagi bumi adalah...",["Matahari","Lampu","Api","Lilin"],0]
+  ]},
+ {judul:"Perkembangbiakan Makhluk Hidup",
+  penjelasan:"Makhluk hidup berkembang biak dengan cara yang berbeda-beda. Tumbuhan dapat berkembang biak secara generatif (biji) atau vegetatif (tanpa biji), sedangkan hewan ada yang bertelur, beranak, atau keduanya.",
+  contoh:"Contoh: cocor bebek berkembang biak secara vegetatif alami melalui tunas daun.",
+  soal:[
+   ["Ayam berkembang biak dengan cara...",["Bertelur (ovipar)","Beranak (vivipar)","Bertelur dan beranak","Membelah diri"],0],
+   ["Tumbuhan yang berkembang biak dengan spora adalah...",["Paku dan jamur","Mangga","Jagung","Kelapa"],0],
+   ["Perkembangbiakan vegetatif buatan pada tumbuhan contohnya adalah...",["Cangkok dan stek","Biji","Tunas alami","Spora"],0],
+   ["Hewan yang berkembang biak dengan cara beranak disebut...",["Vivipar","Ovipar","Ovovivipar","Vegetatif"],0],
+   ["Kelelawar adalah hewan yang berkembang biak secara...",["Vivipar","Ovipar","Ovovivipar","Membelah diri"],0]
+  ]}
+],
+bindo:[
+ {judul:"Teks Laporan Hasil Observasi",
+  penjelasan:"Teks laporan hasil observasi berisi hasil pengamatan terhadap suatu objek secara sistematis dan objektif, biasanya berisi pernyataan umum lalu penjelasan detail (deskripsi bagian).",
+  contoh:"Contoh: laporan pengamatan tentang kucing menjelaskan ciri fisik, makanan, dan kebiasaannya secara berurutan.",
+  soal:[
+   ["Tujuan utama teks laporan hasil observasi adalah...",["Memberikan informasi berdasarkan fakta pengamatan","Menghibur pembaca","Menceritakan pengalaman pribadi","Membujuk pembaca"],0],
+   ["Bagian awal teks laporan hasil observasi disebut...",["Pernyataan umum","Orientasi","Resolusi","Koda"],0],
+   ["Ciri bahasa teks laporan hasil observasi adalah...",["Objektif dan berdasarkan fakta","Penuh imajinasi","Menggunakan bahasa puitis","Berisi opini pribadi"],0],
+   ["Berikut yang termasuk objek yang bisa diobservasi adalah...",["Hewan, tumbuhan, dan lingkungan","Dongeng","Puisi","Lagu"],0],
+   ["Struktur teks laporan hasil observasi adalah pernyataan umum diikuti oleh...",["Deskripsi bagian","Klimaks cerita","Penutup dongeng","Amanat cerita"],0]
+  ]},
+ {judul:"Iklan dan Poster",
+  penjelasan:"Iklan dan poster adalah media untuk menyampaikan informasi atau ajakan kepada masyarakat dengan bahasa yang singkat, menarik, dan mudah diingat, disertai gambar pendukung.",
+  contoh:"Contoh: poster 'Ayo Hemat Air' menggunakan kalimat singkat dan gambar keran air agar mudah dipahami.",
+  soal:[
+   ["Ciri bahasa iklan yang baik adalah...",["Singkat, jelas, dan menarik","Panjang dan rumit","Menggunakan istilah asing sulit","Berisi cerita panjang"],0],
+   ["Tujuan utama poster layanan masyarakat adalah...",["Mengajak atau mengimbau masyarakat","Menjual barang","Menghibur","Menceritakan sejarah"],0],
+   ["Kalimat ajakan dalam iklan biasanya menggunakan kata...",["Ayo, mari","Karena, sebab","Namun, tetapi","Jika, maka"],0],
+   ["Unsur penting dalam poster selain kalimat adalah...",["Gambar yang menarik","Puisi panjang","Rumus matematika","Not angka lagu"],0],
+   ["Iklan yang mempromosikan produk makanan biasanya menonjolkan...",["Keunggulan produk","Kelemahan pesaing","Sejarah pembuatnya","Harga bahan baku"],0]
+  ]},
+ {judul:"Pidato Persuasif",
+  penjelasan:"Pidato persuasif bertujuan mengajak atau memengaruhi pendengar agar melakukan sesuatu, biasanya terdiri dari pembukaan, isi (alasan dan ajakan), dan penutup.",
+  contoh:"Contoh: pidato tentang menjaga kebersihan sekolah mengajak siswa membuang sampah pada tempatnya.",
+  soal:[
+   ["Tujuan pidato persuasif adalah...",["Mengajak atau memengaruhi pendengar","Menghibur pendengar","Menceritakan dongeng","Menyampaikan berita"],0],
+   ["Bagian akhir pidato yang berisi kesimpulan dan ajakan disebut...",["Penutup","Pembukaan","Isi","Prolog"],0],
+   ["Kalimat yang cocok untuk pidato persuasif adalah...",["Mari kita jaga kebersihan sekolah bersama","Kucing itu berwarna oranye","Hari ini cuaca cerah","Saya suka makan nasi goreng"],0],
+   ["Sebelum berpidato, seorang siswa sebaiknya...",["Menyiapkan dan berlatih naskah pidato","Langsung berbicara tanpa persiapan","Menghafal lagu","Menggambar poster"],0],
+   ["Salam pembuka dalam pidato biasanya diucapkan pada bagian...",["Pembukaan","Isi","Penutup","Kesimpulan"],0]
+  ]},
+ {judul:"Cerita Fiksi dan Unsur Intrinsik",
+  penjelasan:"Cerita fiksi adalah karangan berdasarkan imajinasi pengarang. Unsur intrinsik cerita meliputi tema, tokoh, latar, alur, dan amanat yang membangun cerita dari dalam.",
+  contoh:"Contoh: dalam cerita 'Si Kancil', tokoh utamanya kancil yang cerdik, dengan amanat pentingnya kecerdikan menghadapi masalah.",
+  soal:[
+   ["Pesan moral yang terkandung dalam sebuah cerita disebut...",["Amanat","Tema","Alur","Latar"],0],
+   ["Tempat dan waktu terjadinya cerita disebut...",["Latar","Tokoh","Tema","Amanat"],0],
+   ["Urutan peristiwa dalam sebuah cerita disebut...",["Alur","Tema","Tokoh","Sudut pandang"],0],
+   ["Tokoh yang memiliki sifat baik dalam cerita disebut tokoh...",["Protagonis","Antagonis","Figuran","Tritagonis"],0],
+   ["Gagasan pokok yang mendasari sebuah cerita disebut...",["Tema","Alur","Latar","Amanat"],0]
+  ]}
+],
+ips:[
+ {judul:"Kenampakan Alam dan Keragaman Indonesia",
+  penjelasan:"Indonesia memiliki kenampakan alam yang beragam seperti gunung, sungai, pantai, dan dataran rendah, yang memengaruhi keragaman mata pencaharian dan budaya masyarakatnya.",
+  contoh:"Contoh: masyarakat di daerah pantai umumnya bekerja sebagai nelayan, sedangkan di dataran tinggi bertani sayuran.",
+  soal:[
+   ["Kenampakan alam yang berupa daratan tinggi dan luas adalah...",["Dataran tinggi","Pantai","Selat","Delta"],0],
+   ["Masyarakat pesisir pantai umumnya bermata pencaharian sebagai...",["Nelayan","Petani sayur","Penambang emas","Pemandu gunung"],0],
+   ["Indonesia dikenal sebagai negara kepulauan karena...",["Terdiri dari banyak pulau yang dikelilingi laut","Hanya memiliki satu pulau besar","Tidak memiliki laut","Berada di benua Eropa"],0],
+   ["Sungai bermanfaat bagi masyarakat untuk...",["Irigasi, transportasi, dan sumber air","Menambang emas saja","Menara pandang","Objek pertambangan minyak"],0],
+   ["Dataran rendah biasanya dimanfaatkan untuk...",["Pertanian dan permukiman","Pendakian gunung","Penangkapan ikan laut dalam","Pertambangan batu bara saja"],0]
+  ]},
+ {judul:"Kegiatan Ekonomi Masyarakat",
+  penjelasan:"Kegiatan ekonomi meliputi produksi (menghasilkan barang/jasa), distribusi (menyalurkan), dan konsumsi (menggunakan barang/jasa). Ketiganya saling berkaitan dalam kehidupan sehari-hari.",
+  contoh:"Contoh: petani (produksi padi) menjual ke pedagang (distribusi) yang kemudian dibeli masyarakat (konsumsi).",
+  soal:[
+   ["Kegiatan menghasilkan barang atau jasa disebut...",["Produksi","Distribusi","Konsumsi","Investasi"],0],
+   ["Pedagang yang menyalurkan barang dari produsen ke konsumen melakukan kegiatan...",["Distribusi","Produksi","Konsumsi","Perakitan"],0],
+   ["Kegiatan menggunakan atau memakai barang dan jasa disebut...",["Konsumsi","Produksi","Distribusi","Ekspor"],0],
+   ["Contoh kegiatan produksi adalah...",["Petani menanam padi","Membeli baju di toko","Memakai sepatu baru","Menyimpan uang di celengan"],0],
+   ["Orang yang melakukan kegiatan distribusi disebut...",["Distributor","Produsen","Konsumen","Investor"],0]
+  ]},
+ {judul:"Perjuangan Kemerdekaan Indonesia",
+  penjelasan:"Bangsa Indonesia berjuang melawan penjajahan selama ratusan tahun hingga akhirnya memproklamasikan kemerdekaan pada 17 Agustus 1945, dipimpin oleh para tokoh pejuang bangsa.",
+  contoh:"Contoh: Ir. Soekarno dan Moh. Hatta membacakan teks proklamasi kemerdekaan Indonesia.",
+  soal:[
+   ["Indonesia memproklamasikan kemerdekaan pada tanggal...",["17 Agustus 1945","20 Mei 1945","28 Oktober 1928","1 Juni 1945"],0],
+   ["Tokoh yang membacakan teks proklamasi kemerdekaan Indonesia adalah...",["Ir. Soekarno","Jenderal Sudirman","Ki Hajar Dewantara","Cut Nyak Dien"],0],
+   ["Organisasi pemuda yang mencetuskan Sumpah Pemuda dibentuk pada tahun...",["1928","1945","1908","1950"],0],
+   ["Semboyan yang menyatukan keberagaman bangsa Indonesia adalah...",["Bhinneka Tunggal Ika","Merdeka atau Mati","Garuda Pancasila","Sumpah Palapa"],0],
+   ["Wakil presiden pertama Indonesia adalah...",["Moh. Hatta","Soeharto","Sutan Syahrir","Jenderal Sudirman"],0]
+  ]},
+ {judul:"Kerja Sama ASEAN",
+  penjelasan:"ASEAN (Association of Southeast Asian Nations) adalah organisasi kerja sama negara-negara di Asia Tenggara dalam bidang ekonomi, sosial, budaya, dan politik demi menjaga perdamaian kawasan.",
+  contoh:"Contoh: ASEAN mengadakan pertukaran pelajar dan perdagangan bebas antarnegara anggota.",
+  soal:[
+   ["ASEAN didirikan pada tanggal...",["8 Agustus 1967","17 Agustus 1945","1 Januari 2000","10 November 1950"],0],
+   ["Berikut yang bukan negara pendiri ASEAN adalah...",["Timor Leste","Indonesia","Malaysia","Filipina"],0],
+   ["Salah satu bentuk kerja sama ASEAN di bidang ekonomi adalah...",["Perdagangan bebas antarnegara anggota","Perang antarnegara","Penutupan seluruh perbatasan","Larangan pertukaran pelajar"],0],
+   ["Tujuan utama didirikannya ASEAN adalah...",["Menjaga perdamaian dan kerja sama kawasan","Membentuk satu negara baru","Menghapus budaya masing-masing negara","Menguasai negara lain"],0],
+   ["Ibu kota Indonesia yang juga menjadi tempat berdirinya ASEAN adalah...",["Jakarta","Bangkok","Manila","Singapura"],0]
+  ]}
+],
+binggris:[
+ {judul:"Daily Activities (Simple Present)",
+  penjelasan:"Simple present tense digunakan untuk menceritakan kegiatan sehari-hari atau kebiasaan. Untuk subjek he/she/it, kata kerja ditambah -s atau -es.",
+  contoh:"Contoh: 'She wakes up at six.' (Dia bangun jam enam) menggunakan wakes karena subjeknya she.",
+  soal:[
+   ["'She ___ to school every day.' kata yang tepat adalah...",["goes","go","going","gone"],0],
+   ["'I ___ breakfast at 6 AM.' kata yang tepat adalah...",["eat","eats","eating","ate"],0],
+   ["Kalimat yang benar untuk 'Dia (laki-laki) bermain bola.' adalah...",["He plays football","He play football","He playing football","He played football"],0],
+   ["'They ___ their homework every night.' kata yang tepat adalah...",["do","does","doing","did"],0],
+   ["Arti dari 'brush my teeth' adalah...",["Menggosok gigi","Mencuci muka","Menyisir rambut","Mencuci tangan"],0]
+  ]},
+ {judul:"Occupation and Profession",
+  penjelasan:"Kosakata pekerjaan (occupation) digunakan untuk menyebutkan profesi seseorang, seperti teacher, doctor, farmer, dan police officer.",
+  contoh:"Contoh: 'My father is a doctor.' artinya 'Ayah saya adalah seorang dokter.'",
+  soal:[
+   ["Orang yang mengajar di sekolah disebut...",["Teacher","Doctor","Farmer","Driver"],0],
+   ["'A person who cooks food in a restaurant' disebut...",["Chef","Nurse","Pilot","Farmer"],0],
+   ["Arti dari 'police officer' adalah...",["Polisi","Petani","Dokter","Guru"],0],
+   ["'My mother is a ___. She helps sick people.' kata yang tepat adalah...",["nurse","farmer","pilot","driver"],0],
+   ["Orang yang menerbangkan pesawat disebut...",["Pilot","Sailor","Farmer","Teacher"],0]
+  ]},
+ {judul:"Asking and Giving Directions",
+  penjelasan:"Untuk bertanya arah dalam bahasa Inggris, kita bisa menggunakan 'Where is...?' atau 'How can I get to...?', dan menjawabnya dengan kata petunjuk arah seperti turn left, turn right, go straight.",
+  contoh:"Contoh: 'Turn left at the corner, then go straight.' artinya 'Belok kiri di sudut, lalu jalan lurus.'",
+  soal:[
+   ["Arti dari 'turn right' adalah...",["Belok kanan","Belok kiri","Jalan lurus","Berhenti"],0],
+   ["Kalimat untuk bertanya arah adalah...",["Where is the library?","What is your name?","How old are you?","What time is it?"],0],
+   ["Arti dari 'go straight' adalah...",["Jalan lurus","Belok kanan","Belok kiri","Berbalik arah"],0],
+   ["'The school is ___ the hospital.' (di sebelah) kata yang tepat adalah...",["next to","turn left","go straight","far away"],0],
+   ["Arti dari 'It's near the park.' adalah...",["Itu dekat dengan taman","Itu jauh dari taman","Itu di dalam taman","Itu di belakang taman"],0]
+  ]},
+ {judul:"Describing Animals",
+  penjelasan:"Untuk mendeskripsikan hewan dalam bahasa Inggris, kita menggunakan kata sifat (adjective) seperti big, small, fast, slow, dan menyebut ciri fisiknya.",
+  contoh:"Contoh: 'An elephant is big and has a long trunk.' artinya 'Gajah besar dan memiliki belalai panjang.'",
+  soal:[
+   ["Arti dari 'The rabbit is fast.' adalah...",["Kelinci itu cepat","Kelinci itu lambat","Kelinci itu besar","Kelinci itu kecil"],0],
+   ["Hewan yang memiliki ciri 'long neck' adalah...",["Giraffe","Elephant","Turtle","Rabbit"],0],
+   ["Arti dari 'small' adalah...",["Kecil","Besar","Cepat","Lambat"],0],
+   ["'A cat has ___ legs.' kata yang tepat adalah...",["four","two","six","eight"],0],
+   ["Arti dari 'The turtle is slow.' adalah...",["Kura-kura itu lambat","Kura-kura itu cepat","Kura-kura itu besar","Kura-kura itu kecil"],0]
+  ]}
+],
+qurdis:[
+ {judul:"Hadits tentang Kebersihan",
+  penjelasan:"Rasulullah mengajarkan bahwa kebersihan adalah sebagian dari iman. Menjaga kebersihan diri, pakaian, dan lingkungan merupakan wujud ketaatan seorang muslim.",
+  contoh:"Contoh penerapan: mencuci tangan sebelum makan dan membuang sampah pada tempatnya.",
+  soal:[
+   ["Kebersihan menurut ajaran Islam merupakan sebagian dari...",["Iman","Harta","Kekayaan","Jabatan"],0],
+   ["Berikut contoh menjaga kebersihan diri adalah...",["Mandi dan menggosok gigi secara teratur","Membiarkan pakaian kotor","Membuang sampah sembarangan","Tidak mencuci tangan sebelum makan"],0],
+   ["Menjaga kebersihan lingkungan sekolah adalah tanggung jawab...",["Seluruh warga sekolah","Hanya petugas kebersihan","Hanya kepala sekolah","Tidak ada yang bertanggung jawab"],0],
+   ["Salah satu manfaat menjaga kebersihan adalah...",["Terhindar dari penyakit","Menambah kekayaan","Menambah teman","Mempercepat waktu"],0],
+   ["Membuang sampah pada tempatnya adalah wujud...",["Menjaga kebersihan lingkungan","Sikap malas","Sikap boros","Sikap sombong"],0]
+  ]},
+ {judul:"Hadits tentang Menuntut Ilmu",
+  penjelasan:"Rasulullah menganjurkan umatnya untuk menuntut ilmu sepanjang hayat, karena ilmu bermanfaat bagi diri sendiri dan orang lain, serta menjadi bekal di dunia dan akhirat.",
+  contoh:"Contoh penerapan: rajin belajar dan bertanya kepada guru saat tidak memahami pelajaran.",
+  soal:[
+   ["Menuntut ilmu menurut ajaran Islam sebaiknya dilakukan...",["Sepanjang hayat","Hanya saat kecil","Hanya saat sekolah dasar","Tidak perlu dilakukan"],0],
+   ["Manfaat ilmu yang bermanfaat adalah untuk...",["Diri sendiri dan orang lain","Diri sendiri saja","Tidak ada manfaatnya","Hanya untuk kekayaan"],0],
+   ["Sikap yang baik ketika belum memahami pelajaran adalah...",["Bertanya kepada guru","Diam saja","Mengganggu teman","Tidur di kelas"],0],
+   ["Menuntut ilmu termasuk perbuatan yang...",["Dianjurkan dalam Islam","Dilarang dalam Islam","Tidak penting","Hanya untuk orang kaya"],0],
+   ["Bekal yang didapat dari ilmu bermanfaat adalah untuk...",["Dunia dan akhirat","Dunia saja","Akhirat saja","Tidak ada bekal"],0]
+  ]},
+ {judul:"Kisah Keteladanan Nabi",
+  penjelasan:"Kisah para nabi mengajarkan banyak keteladanan seperti kejujuran, kesabaran, dan sikap tolong-menolong yang dapat dicontoh dalam kehidupan sehari-hari.",
+  contoh:"Contoh: Nabi selalu jujur dalam berdagang sehingga dipercaya banyak orang.",
+  soal:[
+   ["Sikap jujur dalam berdagang dicontohkan oleh...",["Nabi","Pedagang curang","Orang sombong","Orang malas"],0],
+   ["Salah satu sifat wajib yang dimiliki nabi adalah...",["Jujur (shiddiq)","Bohong","Malas","Sombong"],0],
+   ["Kisah keteladanan nabi mengajarkan kita untuk bersikap...",["Sabar dan jujur","Sombong dan malas","Curang dan bohong","Kikir dan iri"],0],
+   ["Meneladani sifat nabi berarti...",["Mencontoh perilaku baiknya dalam kehidupan","Meniru penampilan fisiknya","Mengubah namanya","Menirukan suaranya"],0],
+   ["Sifat amanah yang dimiliki nabi berarti...",["Dapat dipercaya","Suka berbohong","Mudah marah","Suka mengingkari janji"],0]
+  ]},
+ {judul:"Hadits tentang Kasih Sayang",
+  penjelasan:"Rasulullah mengajarkan untuk saling menyayangi sesama makhluk, termasuk kepada orang tua, saudara, tetangga, dan bahkan hewan.",
+  contoh:"Contoh penerapan: menyayangi adik, menghormati orang tua, dan tidak menyakiti hewan.",
+  soal:[
+   ["Sikap yang mencerminkan kasih sayang kepada orang tua adalah...",["Menghormati dan mematuhi mereka","Membantah perkataan mereka","Mengabaikan mereka","Berkata kasar kepada mereka"],0],
+   ["Menyayangi sesama makhluk termasuk kepada...",["Manusia dan hewan","Hanya keluarga sendiri","Hanya teman dekat","Hanya orang kaya"],0],
+   ["Contoh kasih sayang kepada adik adalah...",["Membantu dan menjaganya","Membentaknya","Mengabaikannya","Merebut mainannya"],0],
+   ["Rasulullah mengajarkan sikap kasih sayang kepada...",["Semua makhluk ciptaan Allah","Hanya kepada orang kaya","Hanya kepada orang tertentu","Tidak kepada siapapun"],0],
+   ["Sikap penyayang akan membuat hidup menjadi...",["Rukun dan damai","Penuh permusuhan","Sering bertengkar","Saling membenci"],0]
+  ]}
+],
+fiqih:[
+ {judul:"Tata Cara Wudhu",
+  penjelasan:"Wudhu adalah bersuci dengan air sebelum melaksanakan sholat, dengan urutan membasuh wajah, tangan, mengusap kepala, dan membasuh kaki, disertai niat.",
+  contoh:"Contoh urutan: niat, membasuh telapak tangan, berkumur, membasuh wajah, membasuh tangan hingga siku, mengusap kepala, membasuh kaki.",
+  soal:[
+   ["Wudhu dilakukan sebelum melaksanakan...",["Sholat","Makan","Tidur","Bermain"],0],
+   ["Anggota wudhu yang dibasuh terakhir adalah...",["Kaki","Wajah","Tangan","Kepala"],0],
+   ["Salah satu syarat sah wudhu adalah menggunakan...",["Air suci dan mensucikan","Air kotor","Pasir","Minyak"],0],
+   ["Sebelum memulai wudhu, seorang muslim harus...",["Membaca niat","Langsung membasuh kaki","Berbicara keras","Bernyanyi"],0],
+   ["Yang membatalkan wudhu antara lain adalah...",["Buang air kecil","Membaca doa","Membaca Al-Qur'an","Berjalan kaki"],0]
+  ]},
+ {judul:"Sholat Berjamaah",
+  penjelasan:"Sholat berjamaah dilakukan bersama-sama dipimpin oleh seorang imam, dan memiliki keutamaan pahala lebih besar dibandingkan sholat sendirian (munfarid).",
+  contoh:"Contoh: sholat berjamaah di masjid dipimpin oleh imam, makmum mengikuti gerakan imam.",
+  soal:[
+   ["Orang yang memimpin sholat berjamaah disebut...",["Imam","Muadzin","Khatib","Makmum"],0],
+   ["Orang yang mengikuti imam dalam sholat berjamaah disebut...",["Makmum","Imam","Muadzin","Bilal"],0],
+   ["Keutamaan sholat berjamaah dibandingkan sholat sendiri adalah...",["Pahalanya lebih besar","Waktunya lebih singkat","Lebih mudah dilakukan","Tidak perlu wudhu"],0],
+   ["Minimal jumlah orang untuk sholat berjamaah adalah...",["Dua orang (imam dan makmum)","Sepuluh orang","Lima orang","Satu orang"],0],
+   ["Jika makmum tertinggal rakaat imam, ia harus...",["Menambah rakaat setelah imam salam","Langsung pulang","Mengulang sholat dari awal","Membatalkan sholat"],0]
+  ]},
+ {judul:"Zakat dan Sedekah",
+  penjelasan:"Zakat adalah kewajiban mengeluarkan sebagian harta bagi yang mampu, sedangkan sedekah adalah pemberian sukarela tanpa batasan jumlah tertentu.",
+  contoh:"Contoh: zakat fitrah dikeluarkan setiap bulan Ramadhan, sedangkan sedekah bisa dilakukan kapan saja.",
+  soal:[
+   ["Zakat yang dikeluarkan menjelang Idul Fitri disebut...",["Zakat fitrah","Zakat maal","Sedekah jariyah","Infak"],0],
+   ["Perbedaan sedekah dengan zakat adalah...",["Sedekah bersifat sukarela, zakat wajib","Sedekah wajib, zakat sukarela","Keduanya sama saja","Zakat hanya untuk orang kaya"],0],
+   ["Orang yang berhak menerima zakat disebut...",["Mustahik","Muzakki","Munfiq","Musafir"],0],
+   ["Manfaat berzakat dan bersedekah antara lain adalah...",["Membersihkan harta dan menolong sesama","Menambah kekayaan pribadi","Mengurangi silaturahmi","Menyusahkan orang lain"],0],
+   ["Sedekah dapat diberikan dalam bentuk...",["Uang, makanan, atau tenaga","Hanya uang","Hanya makanan","Tidak boleh berupa tenaga"],0]
+  ]},
+ {judul:"Puasa Sunnah",
+  penjelasan:"Selain puasa Ramadhan yang wajib, terdapat puasa sunnah seperti puasa Senin-Kamis dan puasa Ayyamul Bidh yang dianjurkan untuk menambah pahala.",
+  contoh:"Contoh: puasa Senin-Kamis dilakukan setiap hari Senin dan Kamis dalam seminggu.",
+  soal:[
+   ["Puasa sunnah yang dilakukan setiap hari Senin dan Kamis disebut...",["Puasa Senin-Kamis","Puasa Ramadhan","Puasa Ayyamul Bidh","Puasa Syawal"],0],
+   ["Hukum melaksanakan puasa sunnah adalah...",["Dianjurkan, tidak wajib","Wajib bagi semua","Haram dilakukan","Makruh dilakukan"],0],
+   ["Puasa Ayyamul Bidh dilaksanakan pada tanggal...",["13, 14, dan 15 setiap bulan Hijriah","1 dan 2 setiap bulan","Setiap hari Jumat","Awal bulan Masehi"],0],
+   ["Salah satu manfaat berpuasa adalah melatih...",["Kesabaran dan pengendalian diri","Kekayaan","Kepandaian berhitung","Kekuatan fisik semata"],0],
+   ["Puasa yang dilakukan enam hari di bulan Syawal disebut...",["Puasa Syawal","Puasa Senin-Kamis","Puasa Ayyamul Bidh","Puasa Arafah"],0]
+  ]}
+],
+ppkn:[
+ {judul:"Nilai-nilai Pancasila",
+  penjelasan:"Pancasila terdiri dari lima sila yang menjadi dasar negara Indonesia, masing-masing sila mengandung nilai luhur yang harus diterapkan dalam kehidupan sehari-hari.",
+  contoh:"Contoh: menghormati teman yang berbeda agama merupakan penerapan sila pertama Pancasila.",
+  soal:[
+   ["Lambang sila kelima Pancasila adalah...",["Padi dan kapas","Bintang","Pohon beringin","Kepala banteng"],0],
+   ["Sila kedua Pancasila berbunyi...",["Kemanusiaan yang adil dan beradab","Ketuhanan Yang Maha Esa","Persatuan Indonesia","Keadilan sosial bagi seluruh rakyat Indonesia"],0],
+   ["Menghormati teman yang berbeda agama merupakan pengamalan sila...",["Pertama","Kedua","Ketiga","Keempat"],0],
+   ["Musyawarah untuk mencapai mufakat merupakan pengamalan sila ke...",["Empat","Satu","Dua","Lima"],0],
+   ["Lambang negara Indonesia yang memuat Pancasila adalah...",["Garuda Pancasila","Bendera Merah Putih","Peta Indonesia","Bhinneka Tunggal Ika"],0]
+  ]},
+ {judul:"Hak dan Kewajiban Warga Negara",
+  penjelasan:"Setiap warga negara memiliki hak yang harus diterima dan kewajiban yang harus dilaksanakan secara seimbang, seperti hak mendapat pendidikan dan kewajiban menaati aturan.",
+  contoh:"Contoh: siswa memiliki hak mendapat pengajaran dan kewajiban mengikuti tata tertib sekolah.",
+  soal:[
+   ["Contoh hak siswa di sekolah adalah...",["Mendapatkan pengajaran dari guru","Membolos sekolah","Mengganggu teman","Merusak fasilitas sekolah"],0],
+   ["Contoh kewajiban siswa di sekolah adalah...",["Menaati tata tertib sekolah","Menuntut fasilitas mewah","Bebas melanggar aturan","Mengabaikan tugas guru"],0],
+   ["Hak dan kewajiban harus dilaksanakan secara...",["Seimbang","Hak lebih diutamakan","Kewajiban diabaikan","Tidak perlu diperhatikan"],0],
+   ["Contoh hak warga negara dalam bidang kesehatan adalah...",["Mendapat pelayanan kesehatan","Membayar pajak","Mengikuti pemilu","Menaati rambu lalu lintas"],0],
+   ["Salah satu kewajiban warga negara adalah...",["Menaati peraturan yang berlaku","Menuntut hak tanpa batas","Mengabaikan hukum","Melanggar aturan lalu lintas"],0]
+  ]},
+ {judul:"Keberagaman Budaya Indonesia",
+  penjelasan:"Indonesia memiliki keberagaman suku, budaya, bahasa daerah, dan adat istiadat yang harus dijaga dan dihormati sebagai kekayaan bangsa.",
+  contoh:"Contoh: tari Kecak dari Bali dan tari Saman dari Aceh adalah bentuk keragaman budaya Indonesia.",
+  soal:[
+   ["Sikap yang tepat terhadap keberagaman budaya adalah...",["Menghormati dan menghargainya","Mengejeknya","Menganggapnya rendah","Mengabaikannya"],0],
+   ["Tari Kecak berasal dari daerah...",["Bali","Aceh","Jawa Barat","Sumatra Utara"],0],
+   ["Semboyan bangsa Indonesia yang menggambarkan keberagaman adalah...",["Bhinneka Tunggal Ika","Garuda Pancasila","Merdeka atau Mati","Gotong Royong"],0],
+   ["Keberagaman budaya di Indonesia sebaiknya dijadikan sebagai...",["Kekayaan dan pemersatu bangsa","Sumber perpecahan","Alasan untuk saling membenci","Hal yang harus dihilangkan"],0],
+   ["Contoh keberagaman di Indonesia adalah...",["Suku, agama, dan bahasa daerah","Hanya satu suku","Hanya satu bahasa","Hanya satu agama"],0]
+  ]},
+ {judul:"Musyawarah dan Mufakat",
+  penjelasan:"Musyawarah adalah cara pengambilan keputusan bersama dengan berdiskusi hingga mencapai kesepakatan (mufakat), yang mencerminkan nilai gotong royong dan demokrasi Pancasila.",
+  contoh:"Contoh: musyawarah kelas untuk memilih ketua kelas dilakukan dengan berdiskusi bersama.",
+  soal:[
+   ["Musyawarah bertujuan untuk mencapai...",["Mufakat/kesepakatan bersama","Kemenangan sepihak","Perselisihan","Keributan"],0],
+   ["Sikap yang baik saat bermusyawarah adalah...",["Menghargai pendapat orang lain","Memaksakan pendapat sendiri","Tidak mau mendengarkan orang lain","Marah saat pendapatnya ditolak"],0],
+   ["Jika musyawarah tidak mencapai mufakat, biasanya dilakukan...",["Pemungutan suara (voting)","Pertengkaran","Pembubaran kelompok","Pemaksaan kehendak"],0],
+   ["Musyawarah mencerminkan nilai Pancasila sila ke...",["Empat","Satu","Dua","Tiga"],0],
+   ["Contoh musyawarah di lingkungan sekolah adalah...",["Rapat memilih ketua kelas","Bertengkar dengan teman","Bermain sendirian","Mengabaikan pendapat teman"],0]
+  ]}
+],
+pjok:[
+ {judul:"Permainan Bola Besar (Sepak Bola dan Voli)",
+  penjelasan:"Sepak bola dan bola voli termasuk permainan bola besar yang membutuhkan kerja sama tim, teknik dasar seperti mengumpan, menendang, atau memukul bola, serta ketaatan pada aturan permainan.",
+  contoh:"Contoh: dalam sepak bola, teknik dasar menggiring bola disebut dribbling.",
+  soal:[
+   ["Teknik menggiring bola dalam sepak bola disebut...",["Dribbling","Smash","Passing","Blocking"],0],
+   ["Jumlah pemain inti dalam satu tim sepak bola adalah...",["11 orang","6 orang","9 orang","7 orang"],0],
+   ["Teknik memukul bola voli dengan keras ke area lawan disebut...",["Smash","Dribbling","Menggiring","Menendang"],0],
+   ["Permainan bola voli dimainkan dengan cara...",["Memukul bola melewati net","Menendang bola ke gawang","Melempar bola ke keranjang","Memukul bola dengan pemukul kayu"],0],
+   ["Bagian tubuh yang dominan digunakan dalam sepak bola adalah...",["Kaki","Tangan","Kepala saja","Punggung"],0]
+  ]},
+ {judul:"Atletik: Lari dan Lompat",
+  penjelasan:"Cabang atletik meliputi berbagai jenis lari (jarak pendek, menengah, jauh) dan lompat (lompat jauh, lompat tinggi) yang melatih kecepatan, kekuatan, dan koordinasi tubuh.",
+  contoh:"Contoh: lari jarak pendek biasanya menempuh jarak 100 meter dengan kecepatan maksimal.",
+  soal:[
+   ["Lari jarak pendek biasanya menempuh jarak...",["100 meter","5000 meter","10000 meter","42 kilometer"],0],
+   ["Cabang atletik yang mengukur seberapa jauh lompatan seseorang disebut...",["Lompat jauh","Lompat tinggi","Lari estafet","Tolak peluru"],0],
+   ["Posisi badan saat start jongkok pada lari cepat adalah...",["Membungkuk dengan kaki tertekuk","Berdiri tegak","Duduk santai","Berbaring"],0],
+   ["Lari yang dilakukan secara beregu dan saling mengoper tongkat disebut...",["Lari estafet","Lari maraton","Lari jarak pendek","Lompat tinggi"],0],
+   ["Manfaat latihan atletik bagi tubuh adalah...",["Meningkatkan kebugaran jasmani","Membuat tubuh lemah","Mengurangi stamina","Tidak ada manfaatnya"],0]
+  ]},
+ {judul:"Kebugaran Jasmani",
+  penjelasan:"Kebugaran jasmani adalah kemampuan tubuh melakukan aktivitas sehari-hari tanpa mengalami kelelahan berlebihan, dilatih melalui olahraga rutin seperti push up, sit up, dan lari.",
+  contoh:"Contoh: latihan sit up secara rutin dapat melatih kekuatan otot perut.",
+  soal:[
+   ["Latihan yang melatih kekuatan otot perut adalah...",["Sit up","Lari jarak jauh","Lompat tinggi","Renang"],0],
+   ["Latihan push up bermanfaat untuk melatih otot...",["Lengan dan dada","Kaki saja","Leher","Mata"],0],
+   ["Kebugaran jasmani penting agar tubuh...",["Tidak mudah lelah dalam beraktivitas","Menjadi lemah","Mudah sakit","Kurang bertenaga"],0],
+   ["Sebelum berolahraga sebaiknya melakukan...",["Pemanasan","Langsung olahraga berat","Tidur","Makan berat"],0],
+   ["Latihan lari santai secara rutin bermanfaat untuk melatih...",["Daya tahan jantung dan paru-paru","Kekuatan otot perut saja","Kelenturan jari","Ketajaman penglihatan"],0]
+  ]},
+ {judul:"Permainan Bola Kecil (Kasti dan Bulutangkis)",
+  penjelasan:"Permainan bola kecil seperti kasti dan bulutangkis melatih ketangkasan, kecepatan reaksi, dan kerja sama, menggunakan alat seperti pemukul kasti atau raket.",
+  contoh:"Contoh: dalam bulutangkis, pukulan keras ke bawah disebut smash.",
+  soal:[
+   ["Alat pemukul yang digunakan dalam permainan kasti adalah...",["Pemukul kasti dari kayu","Raket","Tongkat estafet","Bola voli"],0],
+   ["Pukulan keras menukik ke bawah dalam bulutangkis disebut...",["Smash","Dribbling","Passing","Lay up"],0],
+   ["Alat yang digunakan untuk bermain bulutangkis adalah...",["Raket dan shuttlecock","Pemukul kasti dan bola","Bola voli dan net","Bola basket dan ring"],0],
+   ["Permainan kasti dimainkan oleh dua regu yang bertugas sebagai...",["Regu pemukul dan regu penjaga","Regu penyerang saja","Regu bertahan saja","Wasit dan penonton"],0],
+   ["Salah satu manfaat bermain bulutangkis adalah melatih...",["Ketangkasan dan refleks","Daya ingat saja","Kemampuan berhitung","Kemampuan menulis"],0]
+  ]}
+],
+sbdp:[
+ {judul:"Menggambar Ilustrasi",
+  penjelasan:"Gambar ilustrasi digunakan untuk memperjelas atau menghias suatu cerita/teks dengan menggunakan pensil, krayon, atau cat, memperhatikan komposisi dan warna.",
+  contoh:"Contoh: gambar ilustrasi pada buku cerita membantu pembaca membayangkan suasana cerita.",
+  soal:[
+   ["Fungsi gambar ilustrasi pada buku cerita adalah...",["Memperjelas isi cerita","Mengurangi jumlah halaman","Menghilangkan makna cerita","Menyulitkan pembaca"],0],
+   ["Alat yang biasa digunakan untuk mewarnai gambar ilustrasi adalah...",["Krayon dan cat air","Penggaris saja","Gunting","Lem"],0],
+   ["Unsur yang perlu diperhatikan dalam menggambar ilustrasi adalah...",["Komposisi dan warna","Hanya ukuran kertas","Jumlah huruf","Kecepatan menggambar"],0],
+   ["Gambar yang menghiasi sampul buku disebut juga...",["Ilustrasi sampul","Diagram batang","Peta konsep","Grafik"],0],
+   ["Teknik mewarnai dengan gradasi warna bertujuan untuk...",["Memberi kesan dimensi/kedalaman","Menghilangkan warna","Mempercepat proses menggambar","Mengurangi detail gambar"],0]
+  ]},
+ {judul:"Tari Daerah",
+  penjelasan:"Setiap daerah di Indonesia memiliki tarian khas dengan gerakan, kostum, dan musik pengiring yang mencerminkan budaya setempat.",
+  contoh:"Contoh: Tari Piring berasal dari Sumatra Barat dan menampilkan gerakan dengan membawa piring.",
+  soal:[
+   ["Tari Piring berasal dari daerah...",["Sumatra Barat","Bali","Jawa Tengah","Papua"],0],
+   ["Tari Kecak berasal dari daerah...",["Bali","Aceh","Kalimantan","Sulawesi"],0],
+   ["Properti utama yang digunakan dalam Tari Piring adalah...",["Piring","Kipas","Selendang","Payung"],0],
+   ["Gerakan tari daerah biasanya diiringi oleh...",["Musik tradisional daerah","Musik modern barat","Tanpa musik","Suara mesin"],0],
+   ["Tari Saman berasal dari daerah...",["Aceh","Bali","Jawa Timur","Sumatra Selatan"],0]
+  ]},
+ {judul:"Kerajinan dari Bahan Alam",
+  penjelasan:"Kerajinan dari bahan alam memanfaatkan bahan seperti biji-bijian, daun kering, dan tanah liat untuk membuat karya seni bernilai guna dan estetika.",
+  contoh:"Contoh: kerajinan anyaman dari daun pandan dapat dijadikan tikar atau tas.",
+  soal:[
+   ["Bahan alam yang dapat dianyam menjadi tikar adalah...",["Daun pandan","Plastik","Kaleng bekas","Besi"],0],
+   ["Kerajinan yang dibuat dari tanah liat contohnya adalah...",["Gerabah dan vas bunga","Anyaman bambu","Kain batik","Lukisan kanvas"],0],
+   ["Manfaat membuat kerajinan dari bahan alam adalah...",["Melatih kreativitas dan ramah lingkungan","Merusak lingkungan","Membuang waktu","Mengurangi kreativitas"],0],
+   ["Contoh bahan alam yang bisa digunakan untuk kerajinan adalah...",["Biji-bijian dan daun kering","Kabel listrik","Baterai bekas","Botol kaca pecah"],0],
+   ["Proses membentuk tanah liat menjadi gerabah disebut...",["Membentuk/memahat","Menganyam","Menjahit","Menempel"],0]
+  ]},
+ {judul:"Lagu Daerah dan Not Angka",
+  penjelasan:"Lagu daerah adalah lagu tradisional yang berasal dari suatu daerah dengan bahasa dan ciri khas budaya setempat, biasanya dinyanyikan dengan iringan notasi angka sederhana.",
+  contoh:"Contoh: lagu 'Ampar-ampar Pisang' berasal dari Kalimantan Selatan.",
+  soal:[
+   ["Lagu 'Ampar-ampar Pisang' berasal dari daerah...",["Kalimantan Selatan","Jawa Barat","Sumatra Utara","Papua"],0],
+   ["Notasi angka digunakan untuk menuliskan...",["Nada dalam sebuah lagu","Gerakan tari","Warna gambar","Bahan kerajinan"],0],
+   ["Lagu 'Cublak-cublak Suweng' berasal dari daerah...",["Jawa Tengah","Bali","Aceh","Maluku"],0],
+   ["Fungsi lagu daerah bagi masyarakat adalah...",["Melestarikan budaya daerah","Menghapus budaya daerah","Tidak memiliki fungsi","Menggantikan bahasa daerah"],0],
+   ["Alat musik yang sering mengiringi lagu daerah Jawa adalah...",["Gamelan","Gitar listrik","Drum modern","Piano"],0]
+  ]}
+]
+};
+
+/* ======================= KANTIN, PENGUMUMAN, AKTIVITAS ======================= */
+const CANTEEN_MENUS = [
+ [{n:"Nasi Uduk Sayur",p:8000,h:"sehat",iq:2},{n:"Es Teh Tawar",p:2000,h:"sehat",iq:1},{n:"Keripik Pedas",p:3000,h:"kurang",iq:-1}],
+ [{n:"Soto Ayam",p:9000,h:"sehat",iq:2},{n:"Jus Jeruk",p:4000,h:"sehat",iq:2},{n:"Coklat Batang",p:5000,h:"sedang",iq:0}],
+ [{n:"Gado-gado",p:8500,h:"sehat",iq:2},{n:"Air Mineral",p:1500,h:"sehat",iq:1},{n:"Gorengan Bakwan",p:2000,h:"kurang",iq:-1}],
+ [{n:"Nasi Goreng Telur",p:9500,h:"sedang",iq:1},{n:"Susu Kotak",p:4000,h:"sehat",iq:2},{n:"Permen",p:1000,h:"kurang",iq:-1}],
+ [{n:"Bubur Ayam",p:7500,h:"sehat",iq:2},{n:"Es Buah",p:5000,h:"sehat",iq:2},{n:"Mie Instan Goreng",p:6000,h:"kurang",iq:-1}],
+ [{n:"Pecel Sayur",p:7000,h:"sehat",iq:2},{n:"Teh Manis Hangat",p:2500,h:"sedang",iq:0},{n:"Cireng",p:3000,h:"kurang",iq:-1}]
+];
+const ANNOUNCEMENTS = [
+ "Perpustakaan sekolah menambah koleksi buku cerita anak minggu ini. Silakan mampir sepulang sekolah!",
+ "Kegiatan kerja bakti membersihkan lingkungan sekolah akan diadakan pada hari Sabtu.",
+ "Diharapkan seluruh siswa membawa botol minum sendiri untuk mengurangi sampah plastik.",
+ "Akan diadakan lomba menggambar tingkat sekolah dalam rangka memperingati hari lingkungan.",
+ "Pemeriksaan kesehatan gigi gratis dari puskesmas akan dilaksanakan minggu depan.",
+ "Kelas 6 diharapkan mulai mempersiapkan diri untuk latihan ujian sekolah.",
+ "Ekstrakurikuler pramuka akan mengadakan kegiatan berkemah bulan depan, pendaftaran dibuka."
+];
+const ACTIVITIES = [
+ "Ekstrakurikuler Pramuka sepulang sekolah",
+ "Latihan Paduan Suara di aula sekolah",
+ "Klub Sains: percobaan sederhana tentang cahaya",
+ "Klub Menggambar dan Mewarnai",
+ "Latihan Futsal antar kelas",
+ "Klub Membaca di perpustakaan",
+ "Latihan Tari Daerah untuk pentas sekolah"
+];
+
+/* ======================= STATE ======================= */
+const STORAGE_KEY = "mufdexSchoolData_v1";
+const SCHEMA_VERSION = 2; // v2: soal & pilihan jawaban diacak per sesi, jawaban dicocokkan lewat isi bukan indeks tetap
+
+function defaultState(){
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    profile:{ nama:"Siswa Baru", kelas:"6" },
+    dayCounter:0,
+    lastAllowanceCounter:-1,
+    saldo:0, tabungan:0,
+    transaksi:[],
+    xp:0, level:1, iq:100,
+    quizHistory:[],
+    absensi:{ hadir:0, tidakHadir:0 },
+    tugas:[],
+    materiPointer:{},
+    today:null
+  };
+}
+let state = null;
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) state = JSON.parse(raw);
+    else state = defaultState();
+  }catch(e){ state = defaultState(); }
+  // fallback untuk data lama yang mungkin belum punya field baru, supaya tidak hilang
+  if(!state.materiPointer) state.materiPointer = {};
+  if(!state.tugas) state.tugas = [];
+  if(!state.transaksi) state.transaksi = [];
+  if(!state.quizHistory) state.quizHistory = [];
+  if(!state.absensi) state.absensi = { hadir:0, tidakHadir:0 };
+  if(typeof state.saldo !== "number") state.saldo = 0;
+  if(typeof state.tabungan !== "number") state.tabungan = 0;
+  if(typeof state.xp !== "number") state.xp = 0;
+  if(typeof state.iq !== "number") state.iq = 100;
+  if(!state.profile) state.profile = { nama:"Siswa Baru", kelas:"6" };
+
+  if(!state.today) generateDay(state.dayCounter, true);
+  // migrasi: perbaiki sesi soal lama yang belum diacak (bug jawaban selalu di posisi pertama)
+  if(state.schemaVersion !== SCHEMA_VERSION){
+    migrateShuffleFix();
+    state.schemaVersion = SCHEMA_VERSION;
+  }
+  saveState();
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+// perbaikan data lama: susun ulang soal pelajaran yang belum selesai dengan pilihan teracak,
+// pelajaran yang sudah selesai (nilainya) tidak diutak-atik supaya riwayat tidak berubah
+function migrateShuffleFix(){
+  if(!state.today || !state.today.lessons) return;
+  state.today.lessons = state.today.lessons.map(l=>{
+    if(l.stage === "selesai") return l;
+    const bank = MATERI[l.subject] || [];
+    const original = bank.find(m=>m.judul===l.judul);
+    const rawSoal = original ? original.soal : l.soal;
+    return { ...l, soal: buildShuffledSoal(rawSoal), stage:"intro", currentQ:0, answers:[], benar:0 };
+  });
+}
+
+/* ======================= DAY GENERATION ======================= */
+function nextMateriFor(subjectKey){
+  const list = MATERI[subjectKey];
+  const idx = (state.materiPointer[subjectKey] || 0) % list.length;
+  state.materiPointer[subjectKey] = idx + 1;
+  return {...list[idx], _idx:idx};
+}
+
+// Mengacak urutan 5 soal + posisi pilihan jawaban untuk setiap soal.
+// Jawaban benar dilacak lewat ISI teks jawaban, bukan indeks lama, jadi tetap akurat setelah diacak.
+function buildShuffledSoal(rawSoal){
+  const shuffledOrder = shuffle(rawSoal); // urutan soal berbeda tiap sesi
+  return shuffledOrder.map(([question, options, correctIdx])=>{
+    const correctText = options[correctIdx];
+    const newOptions = shuffle(options); // posisi pilihan A/B/C/D diacak, bukan pola tetap
+    const newCorrectIdx = newOptions.indexOf(correctText);
+    return [question, newOptions, newCorrectIdx];
+  });
+}
+
+function generateDay(counter, isInit){
+  const dayIndex = counter % 5;
+  const dayName = DAYS[dayIndex];
+  const subjects = SCHEDULE[dayName];
+  const lessons = subjects.map(sub=>{
+    const m = nextMateriFor(sub);
+    return { subject:sub, judul:m.judul, penjelasan:m.penjelasan, contoh:m.contoh, soal:buildShuffledSoal(m.soal),
+      stage:"intro", currentQ:0, answers:[], benar:0 };
+  });
+  const canteen = CANTEEN_MENUS[counter % CANTEEN_MENUS.length];
+  const announcement = ANNOUNCEMENTS[counter % ANNOUNCEMENTS.length];
+  const activity = ACTIVITIES[counter % ACTIVITIES.length];
+
+  state.today = { counter, dayIndex, dayName, lessons, canteen, announcement, activity, attended:false };
+
+  // uang saku sekali per hari
+  if(state.lastAllowanceCounter !== counter){
+    state.saldo += 20000;
+    state.lastAllowanceCounter = counter;
+  }
+  // tugas setiap 2 hari sekali (hari ganjil dalam hitungan counter)
+  if(counter % 2 === 1){
+    const targetLesson = lessons[lessons.length-1];
+    state.tugas.push({
+      id:"tugas-"+counter,
+      subject:targetLesson.subject,
+      judul:targetLesson.judul,
+      deskripsi:"Buatlah rangkuman singkat (minimal 5 kalimat) tentang materi \""+targetLesson.judul+"\" yang dipelajari hari ini pada mata pelajaran "+SUBJECT_NAMES[targetLesson.subject]+".",
+      status:"belum",
+      dayCounter:counter
+    });
+  }
+  // absensi hadir otomatis saat hari baru dimulai
+  state.absensi.hadir += 1;
+}
+
+function goToNextDay(){
+  generateDay(state.dayCounter + 1);
+  state.dayCounter += 1;
+  saveState();
+  render();
+  showToast("Hari berganti menjadi "+state.today.dayName+"! Uang saku Rp20.000 masuk.");
+}
+
+/* ======================= HELPERS ======================= */
+function rupiah(n){ return "Rp"+Number(n).toLocaleString("id-ID"); }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function addXP(n){
+  state.xp += n;
+  state.level = Math.floor(state.xp/150)+1;
+}
+function addIQ(n){
+  state.iq = Math.max(60, Math.min(200, state.iq + n));
+}
+
+/* ======================= NAV / ROUTER ======================= */
+const VIEWS = [
+  {id:"dashboard", label:"Beranda", icon:"home"},
+  {id:"kelas", label:"Kelas", icon:"book"},
+  {id:"kuis", label:"Kuis", icon:"quiz"},
+  {id:"kantin", label:"Kantin", icon:"food"},
+  {id:"tabungan", label:"Uang", icon:"wallet"},
+  {id:"profil", label:"Profil", icon:"user"}
+];
+let currentView = "dashboard";
+let lessonActiveIndex = 0;
+let quizState = null;
+
+function ICON(name){
+  const icons = {
+    home:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11L12 4l8 7"/><path d="M6 10v9h12v-9"/></svg>',
+    book:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5c3-1.5 6-1.5 8 0v14c-2-1.5-5-1.5-8 0z"/><path d="M20 5c-3-1.5-6-1.5-8 0v14c2-1.5 5-1.5 8 0z"/></svg>',
+    quiz:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 2-2.5 2-2.5 4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+    food:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a3 3 0 006 0V3"/><path d="M9 10v11"/><path d="M17 3c-2 0-3 2-3 5s1 4 3 4v9"/></svg>',
+    wallet:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1" fill="currentColor"/></svg>',
+    user:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>'
+  };
+  return icons[name]||"";
+}
+
+function renderNav(){
+  const nav = document.getElementById("navBar");
+  nav.innerHTML = VIEWS.map(v=>`
+    <button class="nav-btn ${currentView===v.id?'active':''}" onclick="setView('${v.id}')">
+      ${ICON(v.icon)}
+      <span>${v.label}</span>
+    </button>`).join("");
+}
+function setView(v){
+  currentView = v;
+  if(v==="kelas") lessonActiveIndex = state.today.lessons.findIndex(l=>l.stage!=="selesai");
+  if(lessonActiveIndex<0) lessonActiveIndex = 0;
+  if(v==="kuis") quizState = null;
+  render();
+}
+window.setView = setView;
+
+/* ======================= RENDER: DASHBOARD ======================= */
+function viewDashboard(){
+  const t = state.today;
+  const doneCount = t.lessons.filter(l=>l.stage==="selesai").length;
+  const kehadiran = state.absensi.hadir+state.absensi.tidakHadir===0?100:
+    Math.round(state.absensi.hadir/(state.absensi.hadir+state.absensi.tidakHadir)*100);
+  const avgScore = state.quizHistory.length? Math.round(state.quizHistory.reduce((a,b)=>a+b.skor,0)/state.quizHistory.length) : 0;
+
+  return `
+  <div class="view">
+    <div class="card">
+      <h2>Halo, ${state.profile.nama}!</h2>
+      <h3>Kelas ${state.profile.kelas} &middot; ${t.dayName}</h3>
+      <div class="stat-grid" style="margin-top:12px;">
+        <div class="stat-box"><div class="val">Lv.${state.level}</div><div class="lbl">Level</div></div>
+        <div class="stat-box"><div class="val">${state.xp}</div><div class="lbl">XP</div></div>
+        <div class="stat-box"><div class="val">${state.iq}</div><div class="lbl">Kepintaran</div></div>
+        <div class="stat-box"><div class="val">${rupiah(state.saldo)}</div><div class="lbl">Saldo</div></div>
+        <div class="stat-box"><div class="val">${rupiah(state.tabungan)}</div><div class="lbl">Tabungan</div></div>
+        <div class="stat-box"><div class="val">${kehadiran}%</div><div class="lbl">Kehadiran</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pelajaran Hari Ini (${doneCount}/${t.lessons.length})</h2>
+      ${t.lessons.map((l,i)=>`
+        <div class="lesson-item">
+          <div>
+            <div class="subj">${SUBJECT_NAMES[l.subject]}</div>
+            <div class="topic">${l.judul}</div>
+          </div>
+          <span class="badge ${l.stage==='selesai'?'badge-selesai':(l.stage==='intro'?'badge-belum':'badge-proses')}">
+            ${l.stage==='selesai'? 'Selesai ('+l.benar+'/5)' : (l.stage==='intro'?'Belum':'Berlangsung')}
+          </span>
+        </div>`).join("")}
+      <button class="btn btn-primary btn-block" style="margin-top:6px;" onclick="setView('kelas')">Masuk Kelas</button>
+      <button class="btn btn-accent btn-block" style="margin-top:10px;" ${doneCount<t.lessons.length?'disabled':''} onclick="goToNextDay()">Lanjut ke Hari Berikutnya</button>
+      ${doneCount<t.lessons.length?'<div class="empty-note">Selesaikan semua pelajaran dulu untuk lanjut ke hari berikutnya.</div>':''}
+    </div>
+
+    <div class="card">
+      <h2>Pengumuman</h2>
+      <div class="announce">${t.announcement}</div>
+      <h2 style="margin-top:12px;">Aktivitas Sekolah Hari Ini</h2>
+      <div class="announce" style="border-left-color:var(--accent2);">${t.activity}</div>
+    </div>
+
+    <div class="card">
+      <h2>Kalender Sekolah</h2>
+      <div class="cal-week">
+        ${DAYS.map(d=>`<div class="cal-day ${d===t.dayName?'active':''}">${d}</div>`).join("")}
+      </div>
+    </div>
+
+    ${state.quizHistory.length? `<div class="card"><h2>Ringkasan Belajar</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val">${state.quizHistory.length}</div><div class="lbl">Kuis Selesai</div></div>
+        <div class="stat-box"><div class="val">${avgScore}</div><div class="lbl">Rata-rata Nilai</div></div>
+        <div class="stat-box"><div class="val">${state.xp>800?'A':state.xp>400?'B':'C'}</div><div class="lbl">Peringkat</div></div>
+      </div></div>` : ""}
+  </div>`;
+}
+
+/* ======================= RENDER: KELAS (ALUR BELAJAR) ======================= */
+function viewKelas(){
+  const t = state.today;
+  const lesson = t.lessons[lessonActiveIndex];
+  if(!lesson){
+    return `<div class="view"><div class="card"><h2>Kelas</h2><div class="empty-note">Semua pelajaran hari ini sudah selesai! Kembali ke Beranda untuk lanjut ke hari berikutnya.</div></div></div>`;
+  }
+
+  let body = "";
+  if(lesson.stage === "intro"){
+    body = `
+      <span class="subject-tag">${SUBJECT_NAMES[lesson.subject]}</span>
+      <h3>${lesson.judul}</h3>
+      <div class="explain-box"><b>Penjelasan Guru:</b><br>${lesson.penjelasan}</div>
+      <div class="example-box"><b>Contoh:</b><br>${lesson.contoh}</div>
+      <button class="btn btn-primary btn-block" onclick="startLatihan(${lessonActiveIndex})">Mulai Latihan (5 Soal)</button>
+    `;
+  } else if(lesson.stage === "soal"){
+    const q = lesson.soal[lesson.currentQ];
+    const answered = lesson.answers[lesson.currentQ] !== undefined;
+    body = `
+      <span class="subject-tag">${SUBJECT_NAMES[lesson.subject]}</span>
+      <div class="q-num">Soal ${lesson.currentQ+1} dari 5</div>
+      <div class="progress-track"><div class="progress-fill" style="width:${(lesson.currentQ)/5*100}%"></div></div>
+      <div class="q-text" style="margin-top:12px;">${q[0]}</div>
+      ${q[1].map((opt,i)=>{
+        let cls="opt";
+        if(answered){
+          if(i===q[2]) cls+=" correct";
+          else if(i===lesson.answers[lesson.currentQ]) cls+=" wrong";
+        }
+        return `<button class="${cls}" ${answered?'disabled':''} onclick="answerLatihan(${lessonActiveIndex},${i})">${opt}</button>`;
+      }).join("")}
+      ${answered?`<button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="nextSoal(${lessonActiveIndex})">${lesson.currentQ<4?'Soal Berikutnya':'Lihat Hasil'}</button>`:""}
+    `;
+  } else if(lesson.stage === "selesai"){
+    const pct = Math.round(lesson.benar/5*100);
+    const hasNext = lessonActiveIndex < t.lessons.length-1;
+    body = `
+      <span class="subject-tag">${SUBJECT_NAMES[lesson.subject]}</span>
+      <h3>Hasil Latihan: ${lesson.judul}</h3>
+      <div class="result-circle" style="--pct:${pct}"><span>${pct}%</span></div>
+      <p style="text-align:center;font-size:13.5px;color:var(--text-dim);">Kamu menjawab benar ${lesson.benar} dari 5 soal.</p>
+      ${hasNext?`<button class="btn btn-primary btn-block" onclick="lessonActiveIndex=${lessonActiveIndex+1};render()">Lanjut ke Pelajaran Berikutnya</button>`:
+      `<button class="btn btn-accent btn-block" onclick="setView('dashboard')">Kembali ke Beranda</button>`}
+    `;
+  }
+
+  return `<div class="view"><div class="card">${body}</div></div>`;
+}
+
+function startLatihan(i){
+  const l = state.today.lessons[i];
+  l.stage="soal"; l.currentQ=0; l.answers=[]; l.benar=0;
+  saveState(); render();
+}
+function answerLatihan(i, optIdx){
+  const l = state.today.lessons[i];
+  if(l.answers[l.currentQ] !== undefined) return;
+  l.answers[l.currentQ] = optIdx;
+  const correct = l.soal[l.currentQ][2] === optIdx;
+  if(correct){ l.benar++; addXP(5); addIQ(1); }
+  saveState(); render();
+}
+function nextSoal(i){
+  const l = state.today.lessons[i];
+  if(l.currentQ < 4){ l.currentQ++; }
+  else { l.stage="selesai"; }
+  saveState(); render();
+}
+window.startLatihan=startLatihan; window.answerLatihan=answerLatihan; window.nextSoal=nextSoal;
+
+/* ======================= RENDER: KUIS ======================= */
+function buildQuizPool(){
+  const pool = [];
+  Object.keys(MATERI).forEach(sub=>{
+    MATERI[sub].forEach(m=>{
+      m.soal.forEach(s=> pool.push({subject:sub, judul:m.judul, q:s[0], opts:s[1], ans:s[2]}));
+    });
+  });
+  return pool;
+}
+function viewKuis(){
+  if(!quizState){
+    return `<div class="view">
+      <div class="card">
+        <h2>Ujian / Kuis Campuran</h2>
+        <h3>Uji semua pelajaran</h3>
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.5;">Kuis berisi 10 soal acak dari seluruh mata pelajaran Kelas 6 SD. Soal akan diacak setiap kali kamu memulai kuis baru.</p>
+        <button class="btn btn-primary btn-block" onclick="startQuiz()">Mulai Kuis</button>
+      </div>
+      ${state.quizHistory.length? `<div class="card"><h2>Riwayat Nilai</h2>
+        ${state.quizHistory.slice(-8).reverse().map(h=>`
+          <div class="hist-item"><span>${h.tanggal}</span><span><b>${h.skor}</b> (${h.benar} benar / ${h.salah} salah)</span></div>`).join("")}
+      </div>`:`<div class="card"><div class="empty-note">Belum ada riwayat kuis.</div></div>`}
+    </div>`;
+  }
+  if(quizState.finished){
+    const pct = quizState.score;
+    return `<div class="view"><div class="card">
+      <h2>Hasil Kuis</h2>
+      <div class="result-circle" style="--pct:${pct}"><span>${pct}</span></div>
+      <p style="text-align:center;font-size:13.5px;color:var(--text-dim);">Benar: ${quizState.benar} &middot; Salah: ${quizState.salah} &middot; +${quizState.xpGain} XP</p>
+      <button class="btn btn-primary btn-block" onclick="quizState=null;render()">Selesai</button>
+    </div></div>`;
+  }
+  const total = quizState.questions.length;
+  const answeredCount = quizState.answers.filter(a=>a!==undefined).length;
+  return `<div class="view"><div class="card">
+    <h2>Kuis Campuran &middot; ${answeredCount}/${total} terjawab</h2>
+    ${quizState.questions.map((q,qi)=>`
+      <div style="margin-bottom:16px;">
+        <div class="q-num">Soal ${qi+1} &middot; ${SUBJECT_NAMES[q.subject]}</div>
+        <div class="q-text">${q.q}</div>
+        ${q.opts.map((opt,oi)=>`
+          <button class="opt ${quizState.answers[qi]===oi?'selected':''}" onclick="selectQuizAnswer(${qi},${oi})">${opt}</button>
+        `).join("")}
+      </div>
+    `).join("")}
+    <button class="btn btn-accent btn-block" ${answeredCount<total?'disabled':''} onclick="submitQuiz()">Kumpulkan Jawaban</button>
+    ${answeredCount<total?`<div class="empty-note">Jawab semua soal untuk mengumpulkan.</div>`:""}
+  </div></div>`;
+}
+function startQuiz(){
+  // acak urutan soal, ambil 10 tanpa duplikat, lalu acak posisi pilihan jawaban tiap soal
+  const picked = shuffle(buildQuizPool()).slice(0,10);
+  const pool = picked.map(q=>{
+    const correctText = q.opts[q.ans];
+    const newOpts = shuffle(q.opts);
+    const newAns = newOpts.indexOf(correctText);
+    return { ...q, opts:newOpts, ans:newAns };
+  });
+  quizState = { questions:pool, answers:new Array(pool.length).fill(undefined), finished:false };
+  render();
+}
+function selectQuizAnswer(qi,oi){
+  quizState.answers[qi]=oi;
+  render();
+}
+function submitQuiz(){
+  let benar=0;
+  quizState.questions.forEach((q,i)=>{ if(quizState.answers[i]===q.ans) benar++; });
+  const salah = quizState.questions.length-benar;
+  const score = Math.round(benar/quizState.questions.length*100);
+  const xpGain = benar*8;
+  addXP(xpGain); addIQ(Math.round(benar/2));
+  state.quizHistory.push({ tanggal: state.today.dayName+" (Hari ke-"+(state.dayCounter+1)+")", skor:score, benar, salah, xp:xpGain });
+  if(state.quizHistory.length>30) state.quizHistory = state.quizHistory.slice(-30);
+  quizState.finished = true; quizState.score = score; quizState.benar = benar; quizState.salah = salah; quizState.xpGain = xpGain;
+  saveState(); render();
+}
+window.startQuiz=startQuiz; window.selectQuizAnswer=selectQuizAnswer; window.submitQuiz=submitQuiz;
+
+/* ======================= RENDER: KANTIN ======================= */
+function viewKantin(){
+  const t = state.today;
+  return `<div class="view">
+    <div class="card">
+      <h2>Kantin Sekolah</h2>
+      <h3>Menu Hari ${t.dayName}</h3>
+      <p style="font-size:12px;color:var(--text-dim);">Saldo kamu: <b style="color:var(--accent);">${rupiah(state.saldo)}</b></p>
+      ${t.canteen.map((item,i)=>`
+        <div class="menu-item">
+          <div>
+            <div class="name">🍽️ ${item.n} <span class="nutri-tag nutri-${item.h==='sehat'?'sehat':(item.h==='sedang'?'sedang':'kurang')}">${item.h}</span></div>
+            <div class="meta">Efek kepintaran: ${item.iq>0?'+':''}${item.iq}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="price">${rupiah(item.p)}</div>
+            <button class="btn btn-ghost" style="padding:6px 12px;margin-top:4px;font-size:12px;" onclick="buyFood(${i})">Beli</button>
+          </div>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+function buyFood(i){
+  const item = state.today.canteen[i];
+  if(state.saldo < item.p){ showToast("Saldo tidak cukup!"); return; }
+  state.saldo -= item.p;
+  addIQ(item.iq);
+  state.transaksi.push({ ket:"Beli "+item.n, jumlah:-item.p, hari:state.today.dayName+" (Hari ke-"+(state.dayCounter+1)+")" });
+  if(state.transaksi.length>50) state.transaksi = state.transaksi.slice(-50);
+  saveState(); render();
+  showToast("Berhasil membeli "+item.n);
+}
+window.buyFood=buyFood;
+
+/* ======================= RENDER: TABUNGAN / UANG (+ TUGAS) ======================= */
+function viewTabungan(){
+  const tugasBelum = state.tugas.filter(t=>t.status==="belum");
+  const tugasSelesai = state.tugas.filter(t=>t.status==="sudah dikirim");
+  return `<div class="view">
+    <div class="card">
+      <h2>Dompet & Tabungan</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val">${rupiah(state.saldo)}</div><div class="lbl">Saldo Kantong</div></div>
+        <div class="stat-box"><div class="val">${rupiah(state.tabungan)}</div><div class="lbl">Tabungan</div></div>
+      </div>
+      <label class="field-label" style="margin-top:14px;">Jumlah (Rp)</label>
+      <input type="number" id="amountInput" placeholder="Contoh: 5000" min="0">
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" onclick="doSavings('nabung')">Menabung</button>
+        <button class="btn btn-pink btn-block" onclick="doSavings('ambil')">Ambil Tabungan</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Riwayat Transaksi</h2>
+      ${state.transaksi.length? state.transaksi.slice(-10).reverse().map(tr=>`
+        <div class="hist-item"><span>${tr.ket}<br><span style="color:var(--text-dim);font-size:11px;">${tr.hari}</span></span>
+        <span style="color:${tr.jumlah<0?'var(--bad)':'var(--good)'};font-weight:700;">${tr.jumlah<0?'-':'+'}${rupiah(Math.abs(tr.jumlah))}</span></div>
+      `).join("") : `<div class="empty-note">Belum ada transaksi.</div>`}
+    </div>
+
+    <div class="card">
+      <h2>Tugas Sekolah</h2>
+      ${state.tugas.length===0? `<div class="empty-note">Belum ada tugas.</div>` : ""}
+      ${tugasBelum.map(tg=>`
+        <div class="task-item">
+          <div class="subj">${SUBJECT_NAMES[tg.subject]}</div>
+          <p>${tg.deskripsi}</p>
+          <button class="btn btn-primary btn-block" onclick="submitTugas('${tg.id}')">Tandai Sudah Dikirim</button>
+        </div>`).join("")}
+      ${tugasSelesai.map(tg=>`
+        <div class="task-item" style="opacity:.6;">
+          <div class="subj">${SUBJECT_NAMES[tg.subject]}</div>
+          <p>${tg.deskripsi}</p>
+          <span class="badge badge-selesai">Sudah dikirim</span>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+function doSavings(type){
+  const input = document.getElementById("amountInput");
+  const amount = parseInt(input.value);
+  if(!amount || amount<=0){ showToast("Masukkan jumlah yang valid"); return; }
+  if(type==="nabung"){
+    if(state.saldo < amount){ showToast("Saldo tidak cukup"); return; }
+    state.saldo -= amount; state.tabungan += amount;
+    state.transaksi.push({ket:"Menabung", jumlah:-amount, hari:state.today.dayName+" (Hari ke-"+(state.dayCounter+1)+")"});
+    showToast("Berhasil menabung "+rupiah(amount));
+  } else {
+    if(state.tabungan < amount){ showToast("Tabungan tidak cukup"); return; }
+    state.tabungan -= amount; state.saldo += amount;
+    state.transaksi.push({ket:"Ambil tabungan", jumlah:amount, hari:state.today.dayName+" (Hari ke-"+(state.dayCounter+1)+")"});
+    showToast("Berhasil mengambil "+rupiah(amount));
+  }
+  if(state.transaksi.length>50) state.transaksi = state.transaksi.slice(-50);
+  saveState(); render();
+}
+function submitTugas(id){
+  const tg = state.tugas.find(t=>t.id===id);
+  if(tg){ tg.status="sudah dikirim"; addXP(15); saveState(); render(); showToast("Tugas dikumpulkan! +15 XP"); }
+}
+window.doSavings=doSavings; window.submitTugas=submitTugas;
+
+/* ======================= RENDER: PROFIL ======================= */
+function viewProfil(){
+  return `<div class="view">
+    <div class="card">
+      <h2>Profil Siswa</h2>
+      <label class="field-label">Nama</label>
+      <input type="text" id="profNama" value="${state.profile.nama}">
+      <label class="field-label">Kelas</label>
+      <input type="text" id="profKelas" value="${state.profile.kelas}">
+      <button class="btn btn-primary btn-block" onclick="saveProfil()">Simpan Profil</button>
+    </div>
+    <div class="card">
+      <h2>Statistik Belajar</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val">${state.level}</div><div class="lbl">Level</div></div>
+        <div class="stat-box"><div class="val">${state.xp}</div><div class="lbl">Total XP</div></div>
+        <div class="stat-box"><div class="val">${state.iq}</div><div class="lbl">Kepintaran</div></div>
+        <div class="stat-box"><div class="val">${state.quizHistory.length}</div><div class="lbl">Kuis Selesai</div></div>
+        <div class="stat-box"><div class="val">${state.absensi.hadir}</div><div class="lbl">Hari Hadir</div></div>
+        <div class="stat-box"><div class="val">${state.dayCounter+1}</div><div class="lbl">Hari ke-</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Jadwal Pelajaran Mingguan</h2>
+      ${DAYS.map(d=>`
+        <div class="lesson-item" style="align-items:flex-start;">
+          <div>
+            <div class="subj">${d}</div>
+            <div class="topic">${SCHEDULE[d].map(s=>SUBJECT_NAMES[s]).join(" &middot; ")}</div>
+          </div>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+function saveProfil(){
+  const nama = document.getElementById("profNama").value.trim();
+  const kelas = document.getElementById("profKelas").value.trim();
+  state.profile.nama = nama || "Siswa";
+  state.profile.kelas = kelas || "6";
+  saveState(); render();
+  showToast("Profil disimpan");
+}
+window.saveProfil=saveProfil;
+
+/* ======================= MAIN RENDER ======================= */
+function render(){
+  renderNav();
+  const app = document.getElementById("app");
+  const t = state.today;
+  let content = "";
+  if(currentView==="dashboard") content = viewDashboard();
+  else if(currentView==="kelas") content = viewKelas();
+  else if(currentView==="kuis") content = viewKuis();
+  else if(currentView==="kantin") content = viewKantin();
+  else if(currentView==="tabungan") content = viewTabungan();
+  else if(currentView==="profil") content = viewProfil();
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">MS</div>
+        <div>
+          <div class="brand-name">Schoolonsim</div>
+          <div class="brand-sub">Simulator Sekolah kelas 5-6</div>
+        </div>
+      </div>
+      <div class="day-pill">${t.dayName} &middot; Hari ke-${state.dayCounter+1}</div>
+    </div>
+    ${content}
+  `;
+}
+
+/* ======================= INIT ======================= */
+loadState();
+render();
+</script>
+</body>
+</html>
